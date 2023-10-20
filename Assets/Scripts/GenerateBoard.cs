@@ -8,22 +8,30 @@ public class GenerateBoard : MonoBehaviour
    [SerializeField] int grid_y;
     [SerializeField] GameObject cubeAlive;
     [SerializeField] GameObject cubeDead;
+    GameObject[] cubes;
     Tiles[,] tiles;
+    float timeInScreen = 2f;
 
 
     void Start ()
     {
+        cubes = new GameObject[grid_x*grid_y];
         tiles = new Tiles[grid_x, grid_y];
         StartCoroutine(ReGenerateGridRotine());
-        //GenerateGrid(tiles);
-        //PrintGrid(tiles);
+        GenerateGrid(tiles);
+        PrintGrid(tiles);
+        //FillArrayCubes();
+       // InstanceCubes();
+       // TurnCubesAndSetPosition();
         //SetCubesGrid(tiles);
+        Debug.Log("El tamaño del tablero es: " + tiles.Length);
+        Debug.Log("El tamaño de los cubos son: " + cubes.Length);
     }
 
     // Update is called once per frame
     void Update ()
     {
-        ReGenerateGrid();
+       // ReGenerateGrid();
     }
 
     private void GenerateGrid(Tiles[,] tiles)
@@ -35,14 +43,7 @@ public class GenerateBoard : MonoBehaviour
             {
                 tiles[x, y] = new Tiles(x, y);
                 int randNum = Random.Range(0, 2);
-                if (randNum != 1)
-                {
-                    tiles[x, y].SetIsDead(true);
-                }
-                else
-                {
-                    tiles[x, y].SetIsDead(false);
-                }
+                tiles[x, y].SetIsDead(randNum  != 1 ? true : false);
             }
         }
     }
@@ -54,14 +55,7 @@ public class GenerateBoard : MonoBehaviour
         {
             for (int y = 0; y < grid_y; y++)
             {
-                if (tiles[x, y].m_isDead)
-                {
-                    printArray += '0';
-                }
-                else
-                {
-                    printArray += '1';
-                }
+                printArray += tiles[x, y].m_isDead ? '0' : '1';
                 printArray += ',';
             }
             printArray += '\n';
@@ -74,20 +68,48 @@ public class GenerateBoard : MonoBehaviour
         for(int x =0; x < grid_x; x++)
         {
             for(int y=0; y < grid_y; y++)
-            {
-                if (tiles[x, y].m_isDead)
-                {
-                    Instantiate(cubeDead, new Vector3(tiles[x,y].m_x, tiles[x, y].m_y), Quaternion.identity);
-                }
-                else
-                {
-                    Instantiate(cubeAlive, new Vector3(tiles[x, y].m_x, tiles[x, y].m_y), Quaternion.identity);
-                }
-                
+            {                
+                GameObject cube = Instantiate(tiles[x, y].m_isDead? cubeDead:cubeAlive, new Vector3(tiles[x, y].m_x, tiles[x, y].m_y), Quaternion.identity);
+                Destroy(cube, timeInScreen);                
             }
         }
     }
 
+    private void FillArrayCubes()
+    {   
+        int i = 0;
+        for (int x = 0; x < grid_x; x++)
+        {
+            for (int y = 0; y < grid_y; y++)
+            {
+                cubes[i] = tiles[x, y].m_isDead ? cubeDead : cubeAlive;
+                i++;
+            }
+        }
+    }
+
+    private void InstanceCubes()
+    {
+        foreach(GameObject c in cubes)
+        {
+             Instantiate(c, Vector3.zero, Quaternion.identity);
+
+            c.SetActive(false);
+        }
+    }
+    private void TurnCubesAndSetPosition()
+    {
+        int i = 0;
+        for (int x = 0; x < grid_x; x++)
+        {
+            for (int y = 0; y < grid_y; y++)
+            {
+                cubes[i].transform.position = new Vector3(tiles[x, y].m_x, tiles[x, y].m_y, 0);
+                cubes[i].SetActive(true);
+                i++;
+            }
+        }
+    }
     public void ReGenerateGrid()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -98,6 +120,7 @@ public class GenerateBoard : MonoBehaviour
         }
     }
 
+    
     IEnumerator ReGenerateGridRotine()
     {
         while (true)
@@ -105,7 +128,7 @@ public class GenerateBoard : MonoBehaviour
             GenerateGrid(tiles);
             PrintGrid(tiles);
             SetCubesGrid(tiles);
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(timeInScreen);
         }
     }
 }
